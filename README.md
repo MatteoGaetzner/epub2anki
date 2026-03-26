@@ -17,7 +17,7 @@ Convert books and ebooks into Anki flashcards using Anthropic's Claude API.
 ## Prerequisites
 
 - Python 3.13+
-- An [Anthropic API Key](https://console.anthropic.com/) set as `ANTHROPIC_API_KEY` in your environment.
+- An [Anthropic API Key](https://console.anthropic.com/)
 
 ## Installation
 
@@ -40,6 +40,12 @@ Basic usage:
 ```bash
 export ANTHROPIC_API_KEY="your-api-key-here"
 epub2anki path/to/your/book.epub
+```
+
+Alternatively, you can pass the API key directly via the CLI:
+
+```bash
+epub2anki path/to/your/book.epub --api-key "your-api-key-here"
 ```
 
 This will parse the EPUB, split it into chunks of ~50,000 characters, generate flashcards using the `claude-haiku-4-5` model, and finally save a `<book-name>.apkg` file in the current working directory.
