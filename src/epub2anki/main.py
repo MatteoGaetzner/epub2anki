@@ -106,7 +106,7 @@ def main():
     parser.add_argument(
         "--batch",
         action="store_true",
-        help="Use Anthropic's async Batch API for 50% lower costs.",
+        help="Use Anthropic's async Batch API for 50%% lower costs.",
     )
     parser.add_argument(
         "--fetch-batch",
@@ -140,7 +140,7 @@ def main():
     parser.add_argument(
         "--db-path",
         type=Path,
-        default=Path("cache/anki_cache.sqlite"),
+        default=Path.home() / ".cache" / "anki_cache.sqlite",
         help="Path to SQLite cache database.",
     )
     parser.add_argument(
@@ -177,6 +177,7 @@ def main():
     args = parser.parse_args()
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
+    args.db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = init_db(args.db_path)
     book_name = args.book_path.stem
 
