@@ -145,6 +145,12 @@ def main():
         help="Path to SQLite cache database.",
     )
     parser.add_argument(
+        "--api-key",
+        type=str,
+        default=None,
+        help="Anthropic API key (overrides ANTHROPIC_API_KEY env var).",
+    )
+    parser.add_argument(
         "--output-path",
         type=Path,
         default=None,
@@ -185,12 +191,15 @@ def main():
         print("Please provide a valid .epub book.", file=sys.stderr)
         sys.exit(1)
 
+    if args.api_key:
+        os.environ["ANTHROPIC_API_KEY"] = args.api_key
+
     if not os.environ.get("ANTHROPIC_API_KEY"):
+        print("Error: Anthropic API key is not set.", file=sys.stderr)
         print(
-            "Error: ANTHROPIC_API_KEY environment variable is not set.", file=sys.stderr
+            "Please provide it via the --api-key flag or set the ANTHROPIC_API_KEY environment variable.",
+            file=sys.stderr,
         )
-        print("Please set your Anthropic API key to use this tool.", file=sys.stderr)
-        print("Example: export ANTHROPIC_API_KEY='your-key-here'", file=sys.stderr)
         sys.exit(1)
 
     book_name = args.book_path.stem
