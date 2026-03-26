@@ -67,14 +67,14 @@ def build_chunk_mappings(book, trees, book_name, conn):
     return prompts_to_batch, id_to_path, cached_all
 
 
-def export_deck(all_notes, book_name, deck_id, output_dir):
+def export_deck(all_notes, book_name, deck_id, output_path):
     """Exports gathered Anki notes to an .apkg file.
 
     Args:
         all_notes (list[genanki.Note]): All notes generated or retrieved from cache.
         book_name (str): The name of the parsed book.
         deck_id (int): The unique integer ID for generating the Anki deck.
-        output_dir (Path): The destination directory for the generated .apkg file.
+        output_path (Path): The destination path for the generated .apkg file.
     """
     if all_notes:
         deck_title = f"{book_name.replace('_', ' ').title()} Deck"
@@ -83,9 +83,8 @@ def export_deck(all_notes, book_name, deck_id, output_dir):
         for note in all_notes:
             my_deck.add_note(note)
 
-        output_file = output_dir / f"{book_name}.apkg"
-        genanki.Package(my_deck).write_to_file(str(output_file))
-        print(f"\nSuccess! Saved {len(all_notes)} notes to {output_file}")
+        genanki.Package(my_deck).write_to_file(str(output_path))
+        print(f"\nSuccess! Saved {len(all_notes)} notes to {output_path}")
     else:
         print("\nPipeline finished, but no notes were generated or found in cache.")
 
@@ -118,8 +117,8 @@ def main():
     parser.add_argument(
         "--deck-id",
         type=int,
-        default=2059400110,
-        help="Unique integer ID for the Anki deck.",
+        default=None,
+        help="Unique integer ID for the Anki deck (auto-generated if not provided).",
     )
     parser.add_argument(
         "--chunk-size",
@@ -146,10 +145,10 @@ def main():
         help="Path to SQLite cache database.",
     )
     parser.add_argument(
-        "--output-dir",
+        "--output-path",
         type=Path,
-        default=Path("decks"),
-        help="Directory to save the finished .apkg file.",
+        default=None,
+        help="Path where the .apkg file should be saved (default: <cwd>/<book_name>.apkg).",
     )
     parser.add_argument(
         "--rate-max-requests",
@@ -194,10 +193,19 @@ def main():
         print("Example: export ANTHROPIC_API_KEY='your-key-here'", file=sys.stderr)
         sys.exit(1)
 
-    args.output_dir.mkdir(parents=True, exist_ok=True)
+    book_name = args.book_path.stem
+
+    if not args.output_path:
+        args.output_path = Path.cwd() / f"{book_name}.apkg"
+
+    if not args.deck_id:
+        args.deck_id = int(hashlib.md5(book_name.encode("utf-8")).hexdigest(), 16) % (
+            1 << 31
+        )
+
+    args.output_path.parent.mkdir(parents=True, exist_ok=True)
     args.db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = init_db(args.db_path)
-    book_name = args.book_path.stem
 
     print(f"Loading and parsing '{book_name}'...")
     book = parse(args.book_path, args.db_path)
@@ -287,7 +295,7 @@ def main():
         conn.close()
 
         # 3. Final Export
-        export_deck(all_notes, book_name, args.deck_id, args.output_dir)
+        export_deck(all_notes, book_name, args.deck_id, args.output_path)
 
 
 if __name__ == "__main__":

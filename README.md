@@ -42,7 +42,7 @@ export ANTHROPIC_API_KEY="your-api-key-here"
 epub2anki path/to/your/book.epub
 ```
 
-This will parse the EPUB, split it into chunks of ~50,000 characters, generate flashcards using the `claude-haiku-4-5` model, and finally place a `<book-name>.apkg` file in the `decks/` directory.
+This will parse the EPUB, split it into chunks of ~50,000 characters, generate flashcards using the `claude-haiku-4-5` model, and finally save a `<book-name>.apkg` file in the current working directory.
 
 ### Advanced Usage & Batching
 
@@ -65,7 +65,7 @@ This will retrieve the completed responses from Anthropic, save them into the lo
 ```
 usage: epub2anki [-h] [--batch] [--fetch-batch FETCH_BATCH] [--deck-id DECK_ID]
                  [--chunk-size CHUNK_SIZE] [--model MODEL] [--retries RETRIES]
-                 [--db-path DB_PATH] [--output-dir OUTPUT_DIR]
+                 [--db-path DB_PATH] [--output-path OUTPUT_PATH]
                  [--rate-max-requests RATE_MAX_REQUESTS] [--rate-max-input RATE_MAX_INPUT]
                  [--rate-max-output RATE_MAX_OUTPUT] [--rate-window RATE_WINDOW]
                  book_path
@@ -82,7 +82,7 @@ options:
   --deck-id DECK_ID     Unique integer ID for the Anki deck.
   --chunk-size SIZE     Maximum text size per LLM prompt (default: 50000).
   --model MODEL         Anthropic model (default: claude-haiku-4-5).
-  --output-dir DIR      Directory to save the finished .apkg file (default: decks).
+  --output-path PATH    Path where the .apkg file should be saved (default: <cwd>/<book_name>.apkg).
 ```
 
 ## License
