@@ -1,6 +1,6 @@
 # epub2anki
 
-Convert books and ebooks into Anki flashcards using Anthropic's Claude API.
+Convert EPUB ebooks into Anki flashcards using Anthropic's Claude API.
 
 ## Overview
 

@@ -1,7 +1,7 @@
 [project]
 name = "epub2anki"
-version = "0.2.3"
-description = "Convert books and ebooks into Anki flashcards using Anthropic's Claude API."
+version = "0.2.4"
+description = "Convert EPUB ebooks into Anki flashcards using Anthropic's Claude API."
 authors = [
     { name = "Matteo Gätzner", email = "matteo.gatzner@gmail.com" }
 ]
