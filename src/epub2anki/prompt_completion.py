@@ -111,9 +111,7 @@ def generate(
     for attempt in range(max_retries):
         try:
             notes = generate_unsafe(prompt, limiter, model)
-            if notes:
-                return notes
-            tqdm.write(f"Attempt {attempt + 1}: No notes returned. Retrying...")
+            return notes
         except Exception as e:
             tqdm.write(f"Attempt {attempt + 1}: Error occurred: {e}. Retrying...")
 
@@ -141,17 +139,13 @@ def generate_unsafe(
 
     client = instructor.from_anthropic(Anthropic())
 
-    try:
-        extraction: FlashcardList = client.messages.create(
-            model=model,
-            max_tokens=4096,
-            messages=[{"role": "user", "content": prompt}],
-            response_model=FlashcardList,
-            extra_body={"cache_control": {"type": "ephemeral"}},
-        )
-    except Exception as e:
-        print(f"API Call Failed: {e}")
-        return []
+    extraction: FlashcardList = client.messages.create(
+        model=model,
+        max_tokens=4096,
+        messages=[{"role": "user", "content": prompt}],
+        response_model=FlashcardList,
+        extra_body={"cache_control": {"type": "ephemeral"}},
+    )
 
     notes = []
     for card in extraction.cards:

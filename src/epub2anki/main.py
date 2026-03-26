@@ -194,71 +194,82 @@ def main():
     )
 
     # 2. Execution Paths
-    if args.fetch_batch:
-        # --- FETCH EXISTING BATCH PATH ---
-        print(f"Retrieving existing batch results for ID: {args.fetch_batch}...")
-        batch_results = retrieve_batch(args.fetch_batch)
-
-        for short_id, notes in batch_results.items():
-            if short_id in id_to_path:
-                original_path = id_to_path[short_id]
-                prompt = prompts_to_batch[short_id]
-                save_notes_to_cache(
-                    conn, book_name, original_path, prompt, args.model, notes
-                )
-                all_notes.extend(notes)
-            else:
-                print(
-                    f"Warning: Batch returned ID {short_id} which does not map to current book structure."
-                )
-
-    elif args.batch:
-        # --- SUBMIT NEW BATCH PATH ---
-        if prompts_to_batch:
-            print(
-                f"Found {len(prompts_to_batch)} un-cached chunks. Submitting batch..."
-            )
-            batch_id = generate_batch(prompts_to_batch, args.model)
-            batch_results = retrieve_batch(batch_id)
+    try:
+        if args.fetch_batch:
+            # --- FETCH EXISTING BATCH PATH ---
+            print(f"Retrieving existing batch results for ID: {args.fetch_batch}...")
+            batch_results = retrieve_batch(args.fetch_batch)
 
             for short_id, notes in batch_results.items():
-                original_path = id_to_path[short_id]
-                prompt = prompts_to_batch[short_id]
-                save_notes_to_cache(
-                    conn, book_name, original_path, prompt, args.model, notes
-                )
-                all_notes.extend(notes)
-        else:
-            print("All chunks were found in the cache! No batch submitted.")
-
-    else:
-        # --- UNBATCHED (SYNCHRONOUS) EXECUTION PATH ---
-        if prompts_to_batch:
-            limiter = RateLimiter(
-                max_requests=args.rate_max_requests,
-                max_input=args.rate_max_input,
-                max_output=args.rate_max_output,
-                window_seconds=args.rate_window,
-            )
-
-            print(f"Processing {len(prompts_to_batch)} sections synchronously...")
-            for short_id, prompt in tqdm(
-                prompts_to_batch.items(), desc="Generating Notes"
-            ):
-                new_notes = generate(prompt, limiter, args.retries, args.model)
-                if new_notes:
+                if short_id in id_to_path:
                     original_path = id_to_path[short_id]
+                    prompt = prompts_to_batch[short_id]
                     save_notes_to_cache(
-                        conn, book_name, original_path, prompt, args.model, new_notes
+                        conn, book_name, original_path, prompt, args.model, notes
                     )
-                    all_notes.extend(new_notes)
+                    all_notes.extend(notes)
+                else:
+                    print(
+                        f"Warning: Batch returned ID {short_id} which does not map to current book structure."
+                    )
+
+        elif args.batch:
+            # --- SUBMIT NEW BATCH PATH ---
+            if prompts_to_batch:
+                print(
+                    f"Found {len(prompts_to_batch)} un-cached chunks. Submitting batch..."
+                )
+                batch_id = generate_batch(prompts_to_batch, args.model)
+                batch_results = retrieve_batch(batch_id)
+
+                for short_id, notes in batch_results.items():
+                    original_path = id_to_path[short_id]
+                    prompt = prompts_to_batch[short_id]
+                    save_notes_to_cache(
+                        conn, book_name, original_path, prompt, args.model, notes
+                    )
+                    all_notes.extend(notes)
+            else:
+                print("All chunks were found in the cache! No batch submitted.")
+
         else:
-            print("All chunks were found in the cache! No synchronous requests made.")
+            # --- UNBATCHED (SYNCHRONOUS) EXECUTION PATH ---
+            if prompts_to_batch:
+                limiter = RateLimiter(
+                    max_requests=args.rate_max_requests,
+                    max_input=args.rate_max_input,
+                    max_output=args.rate_max_output,
+                    window_seconds=args.rate_window,
+                )
 
-    conn.close()
+                print(f"Processing {len(prompts_to_batch)} sections synchronously...")
+                for short_id, prompt in (
+                    pbar := tqdm(prompts_to_batch.items(), desc="Generating Notes")
+                ):
+                    new_notes = generate(prompt, limiter, args.retries, args.model)
+                    if new_notes:
+                        original_path = id_to_path[short_id]
+                        save_notes_to_cache(
+                            conn,
+                            book_name,
+                            original_path,
+                            prompt,
+                            args.model,
+                            new_notes,
+                        )
+                        all_notes.extend(new_notes)
+                    pbar.set_postfix({"notes": len(all_notes)})
+            else:
+                print(
+                    "All chunks were found in the cache! No synchronous requests made."
+                )
+    except KeyboardInterrupt:
+        print("\nProcess interrupted by user. Exporting notes generated so far...")
+    finally:
+        conn.close()
 
-    # 3. Final Export
-    export_deck(all_notes, book_name, args.deck_id, args.output_dir)
+        # 3. Final Export
+        export_deck(all_notes, book_name, args.deck_id, args.output_dir)
 
 
 if __name__ == "__main__":
