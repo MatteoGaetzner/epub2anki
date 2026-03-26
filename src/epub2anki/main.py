@@ -16,6 +16,8 @@ Automatic generation of Anki cards about important content in an epub book.
 
 import argparse
 import hashlib
+import os
+import sys
 from pathlib import Path
 
 import genanki
@@ -175,6 +177,22 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.book_path.suffix.lower() != ".epub":
+        print(
+            f"Error: The provided file '{args.book_path.name}' is not an EPUB file.",
+            file=sys.stderr,
+        )
+        print("Please provide a valid .epub book.", file=sys.stderr)
+        sys.exit(1)
+
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print(
+            "Error: ANTHROPIC_API_KEY environment variable is not set.", file=sys.stderr
+        )
+        print("Please set your Anthropic API key to use this tool.", file=sys.stderr)
+        print("Example: export ANTHROPIC_API_KEY='your-key-here'", file=sys.stderr)
+        sys.exit(1)
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.db_path.parent.mkdir(parents=True, exist_ok=True)
