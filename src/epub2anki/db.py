@@ -27,10 +27,10 @@ SIMPLE_ANKI_MODEL = genanki.Model(
 @cache
 def init_db(db_path: Path) -> sqlite3.Connection:
     """Initializes the SQLite database and creates required tables.
-    
+
     Args:
         db_path (Path): The path to the SQLite database file.
-        
+
     Returns:
         sqlite3.Connection: The established database connection.
     """
@@ -64,12 +64,12 @@ def get_cached_notes(
     conn: sqlite3.Connection, book_name: str, section_path: str
 ) -> list[genanki.Note]:
     """Retrieves generated Anki notes from the database cache for a specific book section.
-    
+
     Args:
         conn (sqlite3.Connection): Active database connection.
         book_name (str): The name of the parsed book.
         section_path (str): The specific path of the section within the book.
-        
+
     Returns:
         list[genanki.Note]: A list of retrieved Anki notes. Returns an empty list if no notes are cached.
     """
@@ -104,7 +104,7 @@ def save_notes_to_cache(
     notes: list[genanki.Note],
 ):
     """Saves generated Anki notes to the database cache.
-    
+
     Args:
         conn (sqlite3.Connection): Active database connection.
         book_name (str): The name of the parsed book.

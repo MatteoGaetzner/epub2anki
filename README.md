@@ -51,7 +51,7 @@ To save 50% on API costs, use the `--batch` flag. This will submit all generatio
 ```bash
 epub2anki path/to/your/book.epub --batch
 ```
-*Note: The Batch API operates asynchronously and usually takes 1-24 hours to finish. `epub2anki` will submit the batch and return a Batch ID.*
+*Note: The Batch API operates asynchronously and takes 5 minutes to 24 hours to finish. `epub2anki` will submit the batch and return a Batch ID.*
 
 Once your batch is ready (you can check your Anthropic Console), run the script again using `--fetch-batch`:
 

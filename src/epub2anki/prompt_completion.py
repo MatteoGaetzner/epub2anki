@@ -39,7 +39,7 @@ class RateLimiter:
         window_seconds: int = 60,
     ):
         """Initializes the RateLimiter with tracking queues and capacity limits.
-        
+
         Args:
             max_requests (int): The maximum number of successful requests allowed within the window.
             max_input (int): The maximum number of input tokens allowed within the window.
@@ -57,7 +57,7 @@ class RateLimiter:
 
     def wait_for_capacity(self, estimated_input: int, estimated_output: int):
         """Blocks execution until the rolling window has enough capacity.
-        
+
         Args:
             estimated_input (int): Expected input tokens for the upcoming request.
             estimated_output (int): Expected output tokens for the upcoming request.
@@ -83,7 +83,7 @@ class RateLimiter:
 
     def record_usage(self, actual_input: int, actual_output: int):
         """Called after the API returns to log the exact token usage.
-        
+
         Args:
             actual_input (int): The actual input token count used in the request.
             actual_output (int): The actual output token count used in the request.
@@ -98,13 +98,13 @@ def generate(
     model: str = "claude-haiku",
 ) -> list[genanki.Note]:
     """Generates Anki flashcards safely, retrying on failure up to max_retries.
-    
+
     Args:
         prompt (str): The pre-formatted LLM prompt.
         limiter (RateLimiter): The rate limiter instance.
         max_retries (int): Maximum number of retries upon error.
         model (str): The model to query.
-        
+
     Returns:
         list[genanki.Note]: Output notes. Empty list if all retries fail.
     """
@@ -125,12 +125,12 @@ def generate_unsafe(
     prompt: str, limiter: RateLimiter, model: str = "claude-haiku"
 ) -> List[genanki.Note]:
     """Takes a fully formatted prompt template and returns a list of valid genanki.Note objects.
-    
+
     Args:
         prompt (str): The prompt indicating the section content.
         limiter (RateLimiter): Used to throttle outbound requests.
         model (str): Target model inference endpoint name.
-        
+
     Returns:
         List[genanki.Note]: Converted Flashcard notes.
     """
@@ -175,10 +175,10 @@ def generate_unsafe(
 
 def format_math_for_anki(text: str) -> str:
     """Converts standard Markdown math delimiters to Anki MathJax delimiters.
-    
+
     Args:
         text (str): Incoming markdown string with standard MathJax markup.
-        
+
     Returns:
         str: Translated string containing Anki-compatible delimiters.
     """
@@ -201,11 +201,11 @@ def generate_batch(
     prompts_by_id: dict[str, str], model_name: str = "claude-haiku"
 ) -> str:
     """Takes a dictionary of {chunk_id: prompt} and submits them all at once to Anthropic.
-    
+
     Args:
         prompts_by_id (dict[str, str]): A mapping from ID string to prompt text.
         model_name (str): Model parameter for the batch request.
-        
+
     Returns:
         str: Extracted batch ID from the Anthropic API structure.
     """
@@ -243,10 +243,10 @@ def generate_batch(
 
 def retrieve_batch(batch_id: str) -> dict[str, list[genanki.Note]]:
     """Polls the batch until complete, then parses results into Genanki objects.
-    
+
     Args:
         batch_id (str): Existing remote Batch ID tracking string.
-        
+
     Returns:
         dict[str, list[genanki.Note]]: Dictionary mapping chunk ID to list of Genanki notes.
     """

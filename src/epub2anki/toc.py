@@ -8,7 +8,7 @@ from ebooklib import epub
 from pydantic import BaseModel, ConfigDict
 from tqdm import tqdm
 
-from db import init_db
+from .db import init_db
 
 
 class TOCNode(BaseModel):
@@ -35,16 +35,16 @@ class SubTree(BaseModel):
 
 def parse(book_path: Path, db_path: Path, recompute: bool = False) -> Book:
     """Parses an EPUB book and computes its Table of Contents tree along with segment sizes.
-    
+
     Args:
         book_path (Path): Path to the EPUB file.
         db_path (Path): Path to the SQLite cache database.
         recompute (bool, optional): Whether to force recomputation of sizes instead of using cache. Defaults to False.
-        
+
     Returns:
         Book: The parsed hierarchical book representation.
     """
-    print(f"Constructing TOC tree...")
+    print("Constructing TOC tree...")
     if not book_path.exists():
         raise FileNotFoundError(f"File {book_path} does not exist.")
 
@@ -101,7 +101,11 @@ def parse(book_path: Path, db_path: Path, recompute: bool = False) -> Book:
         if isinstance(node, epub.Link):
             size = process_and_cache_node(node.href)
             return TOCNode(
-                href=node.href, next_href=next_href_map.get(node.href), title=node.title, size=size, children=[]
+                href=node.href,
+                next_href=next_href_map.get(node.href),
+                title=node.title,
+                size=size,
+                children=[],
             )
 
         section, children = node[0], node[1]
@@ -137,7 +141,7 @@ def parse(book_path: Path, db_path: Path, recompute: bool = False) -> Book:
 
 def prune(tok: Book, titles: set[str]) -> None:
     """Removes specific subtrees from the Book's Table of Contents by title.
-    
+
     Args:
         tok (Book): The parsed book containing the Table of Contents tree.
         titles (set[str]): A set of titles to match against TOC nodes for removal.
@@ -169,12 +173,12 @@ def prune(tok: Book, titles: set[str]) -> None:
 
 def flatten(toc: Book, chunk_size: int = 50000, verbose: bool = False) -> list[SubTree]:
     """Flattens the Book's Table of Contents into a sequential list of SubTrees limited by chunk size.
-    
+
     Args:
         toc (Book): The parsed book containing the TOC tree.
         chunk_size (int, optional): The maximum byte size per chunk. Defaults to 50000.
         verbose (bool, optional): If True, warns when a leaf exceeds the chunk size. Defaults to False.
-        
+
     Returns:
         list[SubTree]: A list of aggregated subtrees.
     """
@@ -371,12 +375,12 @@ def extract_html(book: epub.EpubBook, href1: str, href2: str | None = None) -> s
 
 def href_to_size(book: epub.EpubBook, href1: str, href2: str) -> int:
     """Calculates the byte size of HTML content between two href anchors in an EPUB book.
-    
+
     Args:
         book (epub.EpubBook): The EPUB book object.
         href1 (str): The starting href anchor.
         href2 (str): The ending href anchor.
-        
+
     Returns:
         int: Total size in bytes.
     """

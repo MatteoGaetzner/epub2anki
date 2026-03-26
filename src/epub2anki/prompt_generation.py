@@ -84,10 +84,10 @@ Use the <TableOfContents> and <Path> strictly to understand the broader context.
 
 def get_toc_str(book: Book) -> str:
     """Generates a formatted string representation of the book's table of contents.
-    
+
     Args:
         book (Book): The parsed book containing the Table of Contents tree.
-        
+
     Returns:
         str: A multi-line string where each line represents a node in the TOC, indented by its depth.
     """
@@ -108,10 +108,10 @@ def get_toc_str(book: Book) -> str:
 
 def get_path_str(path: list[str]) -> str:
     """Formats a list of path strings into a breadcrumb-style string.
-    
+
     Args:
         path (list[str]): The list of path components leading to the current section.
-        
+
     Returns:
         str: A breadcrumb string representing the hierarchy.
     """
@@ -120,11 +120,11 @@ def get_path_str(path: list[str]) -> str:
 
 def tree_to_prompt(book: Book, tree: SubTree) -> str:
     """Constructs the LLM prompt for a subtree by combining the TOC, path, and HTML content.
-    
+
     Args:
         book (Book): The parsed book containing the Table of Contents tree.
         tree (SubTree): The specific subtree representing the current section.
-        
+
     Returns:
         str: The fully constructed prompt for the LLM.
     """

@@ -33,13 +33,13 @@ from .toc import flatten, parse, prune
 
 def build_chunk_mappings(book, trees, book_name, conn):
     """Finds cached notes and builds ID mappings for un-cached sections.
-    
+
     Args:
         book (Book): The parsed book containing the Table of Contents tree.
         trees (list[SubTree]): A list of SubTree chunks generated from the TOC.
         book_name (str): The specific name of the book.
         conn (sqlite3.Connection): An active connection to the SQLite cache database.
-        
+
     Returns:
         tuple[dict[str, str], dict[str, str], list[genanki.Note]]: A tuple containing:
             - prompts_to_batch: A dictionary mapping generated short IDs to LLM prompts.
@@ -67,7 +67,7 @@ def build_chunk_mappings(book, trees, book_name, conn):
 
 def export_deck(all_notes, book_name, deck_id, output_dir):
     """Exports gathered Anki notes to an .apkg file.
-    
+
     Args:
         all_notes (list[genanki.Note]): All notes generated or retrieved from cache.
         book_name (str): The name of the parsed book.
@@ -95,7 +95,7 @@ def export_deck(all_notes, book_name, deck_id, output_dir):
 
 def main():
     """Parses command-line arguments and coordinates the generation of Anki flashcards from an EPUB book.
-    
+
     Returns:
         None
     """

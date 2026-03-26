@@ -60,7 +60,7 @@ def test_ignores_href2_if_different_file(mock_book):
 def test_drops_unpaired_opening_tags(mock_book):
     """If a tag is opened but never closed inside the slice, it is dropped."""
     html_content = (
-        "<div class='wrapper'>" "<h2 id='target'>Heading</h2>" "<p>Content</p>"
+        "<div class='wrapper'><h2 id='target'>Heading</h2><p>Content</p>"
         # Notice there is no </div> in the file (or it got cut off)
     )
     mock_book.mock_item.get_content.return_value = html_content.encode("utf-8")
