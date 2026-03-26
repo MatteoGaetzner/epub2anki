@@ -267,12 +267,16 @@ def retrieve_batch(batch_id: str) -> dict[str, list[genanki.Note]]:
 
         succeeded = batch_status.request_counts.succeeded
         processing = batch_status.request_counts.processing
+        errored = batch_status.request_counts.errored
+        canceled = batch_status.request_counts.canceled
+        expired = batch_status.request_counts.expired
+        total = succeeded + processing + errored + canceled + expired
 
         # Inner loop to update the CLI every second without hitting the API
         for remaining_seconds in range(poll_interval, 0, -1):
             spin_char = next(spinner)
             # \r returns cursor to the start of the line. flush=True forces the terminal to draw it immediately.
-            status_text = f"\r{spin_char} Status: {status} (Processed {succeeded} / {processing})... polling again in {remaining_seconds}s  "
+            status_text = f"\r{spin_char} Status: {status} (Processed {succeeded} / {total})... polling again in {remaining_seconds}s  "
             sys.stdout.write(status_text)
             sys.stdout.flush()
             time.sleep(1)
