@@ -199,9 +199,8 @@ def main():
         args.output_path = Path.cwd() / f"{book_name}.apkg"
 
     if not args.deck_id:
-        args.deck_id = int(hashlib.md5(book_name.encode("utf-8")).hexdigest(), 16) % (
-            1 << 31
-        )
+        file_hash = hashlib.md5(args.book_path.read_bytes()).hexdigest()
+        args.deck_id = int(file_hash, 16) % (1 << 31)
 
     args.output_path.parent.mkdir(parents=True, exist_ok=True)
     args.db_path.parent.mkdir(parents=True, exist_ok=True)
