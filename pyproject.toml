@@ -1,6 +1,6 @@
 [project]
 name = "epub2anki"
-version = "0.2.4"
+version = "0.2.5"
 description = "Convert EPUB ebooks into Anki flashcards using Anthropic's Claude API."
 authors = [
     { name = "Matteo Gätzner", email = "matteo.gatzner@gmail.com" }
@@ -13,7 +13,6 @@ dependencies = [
     "genanki>=0.13.1",
     "instructor>=1.14.5",
     "markdown>=3.10.2",
-    "markitdown>=0.1.5",
     "pydantic>=2.12.5",
     "tqdm>=4.67.3",
 ]

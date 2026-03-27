@@ -151,12 +151,8 @@ def generate_unsafe(
     for card in extraction.cards:
         clean_tags = [tag.replace(" ", "_") for tag in card.tags]
 
-        html_front = markdown.markdown(card.front)
-        html_back = markdown.markdown(card.back)
-
-        # Format the math delimiters right before creating the note
-        anki_front = format_math_for_anki(html_front)
-        anki_back = format_math_for_anki(html_back)
+        anki_front = markdown_to_anki_html(card.front)
+        anki_back = markdown_to_anki_html(card.back)
 
         note = genanki.Note(
             model=SIMPLE_ANKI_MODEL, fields=[anki_front, anki_back], tags=clean_tags
@@ -167,23 +163,36 @@ def generate_unsafe(
     return notes
 
 
-def format_math_for_anki(text: str) -> str:
-    """Converts standard Markdown math delimiters to Anki MathJax delimiters.
+def markdown_to_anki_html(text: str) -> str:
+    """Safely converts Markdown to HTML while protecting MathJax elements from the parser.
 
     Args:
         text (str): Incoming markdown string with standard MathJax markup.
 
     Returns:
-        str: Translated string containing Anki-compatible delimiters.
+        str: HTML string containing Anki-compatible math delimiters.
     """
-    # Convert display math: $$ ... $$ -> \[ ... \]
-    text = re.sub(r"\$\$(.*?)\$\$", r"\\[\1\\]", text, flags=re.DOTALL)
+    math_blocks = []
 
-    # Convert inline math: $ ... $ -> \( ... \)
+    def repl_display(match):
+        math_blocks.append(r"\[" + match.group(1) + r"\]")
+        return f"MATHBLOCKREPLACEMENT{len(math_blocks)-1}"
+
+    text = re.sub(r"\$\$(.*?)\$\$", repl_display, text, flags=re.DOTALL)
+
+    def repl_inline(match):
+        math_blocks.append(r"\(" + match.group(1) + r"\)")
+        return f"MATHBLOCKREPLACEMENT{len(math_blocks)-1}"
+
     # Uses negative lookbehinds/lookaheads to ensure we don't accidentally match $$
-    text = re.sub(r"(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)", r"\\(\1\\)", text)
+    text = re.sub(r"(?<!\$)\$(?!\$)(.*?)(?<!\$)\$(?!\$)", repl_inline, text)
 
-    return text
+    html = markdown.markdown(text)
+
+    for i, block in enumerate(math_blocks):
+        html = html.replace(f"MATHBLOCKREPLACEMENT{i}", block)
+
+    return html
 
 
 # ==========================================
@@ -294,10 +303,8 @@ def retrieve_batch(batch_id: str) -> dict[str, list[genanki.Note]]:
                         extraction = FlashcardList(**content_block.input)  # type: ignore
                         for card in extraction.cards:
                             clean_tags = [tag.replace(" ", "_") for tag in card.tags]
-                            html_front = markdown.markdown(card.front)
-                            html_back = markdown.markdown(card.back)
-                            anki_front = format_math_for_anki(html_front)
-                            anki_back = format_math_for_anki(html_back)
+                            anki_front = markdown_to_anki_html(card.front)
+                            anki_back = markdown_to_anki_html(card.back)
 
                             note = genanki.Note(
                                 model=SIMPLE_ANKI_MODEL,

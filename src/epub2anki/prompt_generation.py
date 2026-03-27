@@ -1,24 +1,19 @@
-from io import BytesIO
-
-from markitdown import MarkItDown
-
 from .toc import Book, SubTree, TOCNode, extract_html
 
-md = MarkItDown(enable_plugins=True)
-
-prompt_template = """System: You are an expert educator and Anki flashcard creator. Your objective is to extract core concepts, definitions, mechanisms, and key facts from the provided text and convert them into high-quality Anki flashcards.
+prompt_template = """You are an expert educator and Anki flashcard creator. Your objective is to extract core concepts, definitions, mechanisms, and key facts from the provided text and convert them into high-quality Anki flashcards.
 
 # Card Creation Principles
 1. **Atomicity:** Each card must test exactly ONE concept. Break complex ideas (like lists or multi-part processes) into separate cards.
 2. **Self-Contained Context:** The front of the card must be fully understandable in isolation. Never use pronouns (e.g., "it", "this theorem"). Explicitly name the subject, concept, or algorithm.
 3. **Comprehension Over Trivia:** Focus on "why" and "how" rather than rote, disconnected memorization.
-4. **Brevity & Emphasis:** Keep the back of the card extremely concise. Use Markdown **bolding** to highlight the 1-3 most critical keywords in the answer.
+4. **Brevity & Emphasis:** Keep the back of the card extremely concise. Use Markdown **bolding** to highlight the 1-3 most critical keywords. If an answer requires listing items, you MUST place each item on a new line (e.g., `1. First\n2. Second`) rather than writing them inline, so markdown lists render correctly.
 5. **Universal Knowledge:** The cards must test the underlying subject matter, NOT the book or document itself. Write the cards as if they belong in a generalized, universal knowledge base for this field of study.
 
 # Strict Exclusions (What NOT to do)
-- **NO Meta-References:** Never use phrases like "In Chapter 1", "According to the book", "As introduced in this section", or "The author states".
+- **NO Meta-References:** Never use phrases like "In Chapter 1", "According to the book", "As introduced in this section", "The author states", or explicit text structural references like "(Equation 1.6)" or "Figure 3".
 - **NO Syllabus/Structural Questions:** Never create cards about the structure or outline of the text (e.g., "What are the four topics covered in this chapter?").
 - **NO Source-Specific Trivia:** Skip introductory fluff, personal anecdotes from the author, or generalized context that lacks a specific, testable fact.
+- **NO Example-Specific Cards:** If the section is a summary or review that references specific examples, case studies, or scenarios from earlier in the book (e.g., "the database example from Chapter 3", "the company discussed earlier"), do NOT create cards about those examples. Only create cards if the section presents new, generalizable concepts or principles that stand alone without requiring knowledge of book-specific examples.
 
 # Examples
 **Bad Card (Violates Atomicity and Focuses on Lists)**
@@ -28,6 +23,10 @@ prompt_template = """System: You are an expert educator and Anki flashcard creat
 **Bad Card (Violates Universal Knowledge / Meta-Reference)**
 - Front: As discussed in Section 4.2, what is the second step of cellular respiration?
 - Back: The Krebs cycle.
+
+**Bad Card (Example-Specific / Requires Book Context)**
+- Front: In the retail company example, what was the primary reason for implementing a NoSQL database?
+- Back: To handle the high volume of unstructured customer data.
 
 **Good Card (Clear context, universal, testing mechanisms - Computer Science)**
 - Front: In the context of database transactions, what specific guarantee does **Isolation** (the 'I' in ACID) provide?
@@ -42,11 +41,24 @@ prompt_template = """System: You are an expert educator and Anki flashcard creat
 - Back: To extract high-energy electrons and transfer them to carrier molecules (**NADH** and **FADH₂**) for use in the electron transport chain.
 
 # Execution Instructions
-1. Silently analyze the <SectionContent> to identify distinct, testable concepts. Discard any text related to the book's structure, outline, or meta-commentary.
-2. Draft atomic, self-contained questions for the front of the cards.
-3. Draft concise, bold-emphasized answers for the back of the cards.
-4. Verify that no card references the book, author, or chapter.
-5. Format the final output.
+
+Before creating any cards, use your scratchpad to analyze the content:
+
+<scratchpad>
+First, analyze the section content:
+1. Is this a summary, review, or concluding section?
+2. Does it reference specific examples, case studies, or scenarios from earlier in the book?
+3. Does it present new, generalizable concepts that stand alone, or does it merely recap book-specific content?
+4. Identify which concepts are truly universal and testable without book context.
+5. List the distinct, atomic concepts that warrant flashcard creation.
+6. Verify that each concept can be understood and tested independently of the source material.
+</scratchpad>
+
+Then proceed to create cards:
+1. Draft atomic, self-contained questions for the front of the cards.
+2. Draft concise, bold-emphasized answers for the back of the cards.
+3. Verify that no card references the book, author, chapter, or book-specific examples.
+4. Format the final output.
 
 # Output Format
 Output ONLY valid JSON. Do not include introductory text, explanations, or markdown formatting blocks. The JSON must adhere exactly to this structure:
@@ -55,10 +67,16 @@ Output ONLY valid JSON. Do not include introductory text, explanations, or markd
   "cards": [
     {{
       "front": "The clear, self-contained question explicitly naming the concept.",
-      "back": "The concise answer, using **bolding** for key terms.",
+      "back": "The concise answer. Use **bolding** for key terms. For math, use strictly valid LaTeX ($inline$ or $$display$$) with **no HTML/Markdown tags inside the math environment**.",
       "tags": ["TopicTag1", "TopicTag2"]
     }}
   ]
+}}
+
+If no suitable cards can be created from the section (e.g., it only contains book-specific examples or structural content), output:
+
+{{
+  "cards": []
 }}
 
 ## Tagging Rules
@@ -67,19 +85,24 @@ Output ONLY valid JSON. Do not include introductory text, explanations, or markd
 - If the extracted concept is too general or foundational to warrant a specific domain tag, output an empty list: [].
 
 # Context & Inputs
-Use the <TableOfContents> and <Path> strictly to understand the broader context. Generate flashcards EXCLUSIVELY based on the facts explicitly presented in the <SectionContent>. Do not infer, hallucinate, or add outside information.
+
+You will be provided with three pieces of information to help you create flashcards:
 
 <TableOfContents>
-{toc}
+{TOC}
 </TableOfContents>
 
 <Path>
-{path_str}
+{PATH}
 </Path>
 
 <SectionContent>
-{section}
-</SectionContent>"""
+{SECTION}
+</SectionContent>
+
+Use the TableOfContents and Path strictly to understand the broader context and subject domain. Generate flashcards EXCLUSIVELY based on the facts explicitly presented in the SectionContent. Do not infer, hallucinate, or add outside information. If the SectionContent only references examples or case studies from elsewhere in the book without presenting new generalizable concepts, create no cards.
+
+Begin your analysis in scratchpad tags, then output your final JSON response."""
 
 
 def get_toc_str(book: Book) -> str:
@@ -129,8 +152,6 @@ def tree_to_prompt(book: Book, tree: SubTree) -> str:
         str: The fully constructed prompt for the LLM.
     """
     html = extract_html(book.epub_book, tree.node.href, tree.node.next_href)
-    f = BytesIO(html.encode())
     toc_str = get_toc_str(book)
-    section = md.convert(source=f).text_content
     path_str = get_path_str(tree.path)
-    return prompt_template.format(toc=toc_str, path_str=path_str, section=section)
+    return prompt_template.format(TOC=toc_str, PATH=path_str, SECTION=html)

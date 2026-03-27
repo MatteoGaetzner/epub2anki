@@ -62,7 +62,7 @@ def init_db(db_path: Path) -> sqlite3.Connection:
 
 def get_cached_notes(
     conn: sqlite3.Connection, book_name: str, section_path: str
-) -> list[genanki.Note]:
+) -> list[genanki.Note] | None:
     """Retrieves generated Anki notes from the database cache for a specific book section.
 
     Args:
@@ -71,7 +71,7 @@ def get_cached_notes(
         section_path (str): The specific path of the section within the book.
 
     Returns:
-        list[genanki.Note]: A list of retrieved Anki notes. Returns an empty list if no notes are cached.
+        list[genanki.Note] | None: A list of retrieved Anki notes. Returns None if on cache miss.
     """
     cursor = conn.cursor()
     cursor.execute(
@@ -80,8 +80,8 @@ def get_cached_notes(
     )
     row = cursor.fetchone()
 
-    if not row:
-        return []
+    if row is None:
+        return None
 
     notes_data = json.loads(row[0])
     notes = []

@@ -24,7 +24,8 @@ import genanki
 from tqdm import tqdm
 
 from .db import get_cached_notes, init_db, save_notes_to_cache
-from .prompt_completion import RateLimiter, generate, generate_batch, retrieve_batch
+from .prompt_completion import (RateLimiter, generate, generate_batch,
+                                retrieve_batch)
 from .prompt_generation import get_path_str, tree_to_prompt
 from .toc import flatten, parse, prune
 
@@ -56,7 +57,7 @@ def build_chunk_mappings(book, trees, book_name, conn):
         section_path_str = get_path_str(subtree.path)
         cached_notes = get_cached_notes(conn, book_name, section_path_str)
 
-        if cached_notes:
+        if cached_notes is not None:
             cached_all.extend(cached_notes)
         else:
             prompt = tree_to_prompt(book, subtree)
@@ -281,17 +282,19 @@ def main():
                     pbar := tqdm(prompts_to_batch.items(), desc="Generating Notes")
                 ):
                     new_notes = generate(prompt, limiter, args.retries, args.model)
-                    if new_notes:
-                        original_path = id_to_path[short_id]
-                        save_notes_to_cache(
-                            conn,
-                            book_name,
-                            original_path,
-                            prompt,
-                            args.model,
-                            new_notes,
-                        )
-                        all_notes.extend(new_notes)
+                    original_path = id_to_path[short_id]
+                    save_notes_to_cache(
+                        conn,
+                        book_name,
+                        original_path,
+                        prompt,
+                        args.model,
+                        new_notes,
+                    )
+                    all_notes.extend(new_notes)
+                    pbar.write(
+                        f"{original_path.replace('root  ->  ', '').replace('  ->  ', '->')}: {len(new_notes)} new notes"
+                    )
                     pbar.set_postfix({"notes": len(all_notes)})
             else:
                 print(
