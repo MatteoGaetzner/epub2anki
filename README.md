@@ -1,7 +1,3 @@
-<p align="center">
-  <img src="assets/logo.png" width="300" alt="epub2anki logo">
-</p>
-
 # epub2anki
 
 Convert EPUB ebooks into Anki flashcards using Anthropic's Claude API.
