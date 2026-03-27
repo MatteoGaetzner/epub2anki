@@ -24,8 +24,7 @@ import genanki
 from tqdm import tqdm
 
 from .db import get_cached_notes, init_db, save_notes_to_cache
-from .prompt_completion import (RateLimiter, generate, generate_batch,
-                                retrieve_batch)
+from .prompt_completion import RateLimiter, generate, generate_batch, retrieve_batch
 from .prompt_generation import get_path_str, tree_to_prompt
 from .toc import flatten, parse, prune
 
